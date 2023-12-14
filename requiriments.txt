@@ -1,0 +1,93 @@
+options = uc.ChromeOptions()
+options.add_argument("--password-store=basic")
+if config['options']['headless'] == 'True':
+options.headless = True
+options.add_argument("--no-sandbox")
+options.add_argument("--disable-dev-shm-usage")
+options.add_argument("--incognito")
+options.add_argument("--disable-extensions")
+options.add_argument("--enable-automation")
+options.add_argument("--disable-browser-side-navigation")
+options.add_argument("--disable-web-security")
+options.add_argument("--disable-dev-shm-usage")
+options.add_argument("--disable-infobars")
+options.add_argument("--disable-gpu")
+options.add_argument("--disable-setuid-sandbox")
+options.add_argument("--disable-software-rasterizer")
+
+options.add_experimental_option(
+"prefs",
+{
+"credentials_enable_service": False,
+"profile.password_manager_enabled": False,
+},
+)
+
+print('- Finished importing packages')
+
+
+
+import undetected_chromedriver as uc
+driver = uc.Chrome(headless=True,use_subprocess=False)
+driver.get('https://nowsecure.nl')
+driver.save_screenshot('nowsecure.png')
+
+
+
+from seleniumbase import Driver
+
+driver = Driver(uc=True)
+driver.get("https://canal360i.cloud.itau.com.br/login/iparceiros")
+driver.implicitly_wait(10)
+
+
+import time
+from seleniumbase import page_actions
+from seleniumbase import DriverContext
+from sbvirtualdisplay import Display
+
+
+def verify_success(driver):
+    page_actions.wait_for_text(
+        driver, "OH YEAH, you passed!", "h1", by="css selector"
+    )
+    print("\n Success! Website did not detect Selenium!")
+
+
+def fail_me():
+    raise Exception('Selenium was detected! Try using: "pytest --uc"')
+
+
+display = Display(visible=0, size=(1440, 1880))
+display.start()
+with DriverContext(uc=True, headless=False) as driver:
+    driver.get("https://nowsecure.nl/#relax")
+    try:
+        verify_success(driver)
+    except Exception:
+        if page_actions.is_element_visible(
+            driver, 'input[value*="Verify"]'
+        ):
+            element = driver.find_element(
+                "css selector", 'input[value*="Verify"]'
+            )
+            element.click()
+        elif page_actions.is_element_visible(
+            driver, 'iframe[title*="challenge"]'
+        ):
+            element = driver.find_element(
+                "css selector", 'iframe[title*="challenge"]'
+            )
+            driver.switch_to.frame(element)
+            driver.find_element("css selector", "span.mark").click()
+        else:
+            fail_me()
+        try:
+            verify_success(driver)
+        except Exception:
+            fail_me()
+    time.sleep(2)
+    screenshot_name = "now_secure_image.png"
+    driver.save_screenshot(screenshot_name)
+    print("\nScreenshot saved to: %s\n" % screenshot_name)
+display.stop()
